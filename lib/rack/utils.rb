@@ -113,14 +113,19 @@ module Rack
         params[k] ||= []
         raise TypeError, "expected Array (got #{params[k].class.name}) for param `#{k}'" unless params[k].is_a?(Array)
         params[k] << v
-      elsif after =~ %r(^\[\]\[([^\[\]]+)\]$) || after =~ %r(^\[\](.+)$)
-        child_key = $1
+      elsif after =~ %r(^\[(|\d+)\]\[([^\[\]]+)\]$) || after =~ %r(^\[\](.+)$)
+        index = $1
+        child_key = $2
         params[k] ||= []
         raise TypeError, "expected Array (got #{params[k].class.name}) for param `#{k}'" unless params[k].is_a?(Array)
         if params_hash_type?(params[k].last) && !params[k].last.key?(child_key)
           normalize_params(params[k].last, child_key, v)
         else
-          params[k] << normalize_params(params.class.new, child_key, v)
+          if index.is_a? Integer
+            params[k][index] = normalize_params(params.class.new, child_key, v)
+          else
+            params[k] << normalize_params(params.class.new, child_key, v)
+          end
         end
       else
         params[k] ||= params.class.new
